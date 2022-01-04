@@ -1,6 +1,6 @@
-import { Post } from "../entities/Post";
-import { MyContext } from "src/types";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Post } from '../entities/Post';
+import { MyContext } from 'src/types';
+import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 
 @Resolver()
 export class PostResolver {
@@ -15,7 +15,7 @@ export class PostResolver {
   // Query decorator is for fetching data
   @Query(() => Post, { nullable: true }) // return the Post
   post(
-    @Arg("id") id: number,
+    @Arg('id') id: number,
     @Ctx()
     { em }: MyContext
   ): Promise<Post | null> {
@@ -25,7 +25,7 @@ export class PostResolver {
   // Muation decorator is for insert, edit or delete
   @Mutation(() => Post, { nullable: true })
   async createPost(
-    @Arg("title") title: String,
+    @Arg('title') title: String,
     @Ctx()
     { em }: MyContext
   ): Promise<Post | null> {
@@ -37,8 +37,8 @@ export class PostResolver {
   // Muation decorator is for insert, edit or delete
   @Mutation(() => Post, { nullable: true })
   async updatePost(
-    @Arg("id") id: number,
-    @Arg("title", () => String, { nullable: true }) title: String,
+    @Arg('id') id: number,
+    @Arg('title', () => String, { nullable: true }) title: String,
     @Ctx()
     { em }: MyContext
   ): Promise<Post | null> {
@@ -46,7 +46,7 @@ export class PostResolver {
     if (!post) {
       return null;
     }
-    if (typeof title !== "undefined") {
+    if (typeof title !== 'undefined') {
       post.title = title;
       await em.persistAndFlush(post);
     }
@@ -55,11 +55,11 @@ export class PostResolver {
 
   @Mutation(() => Boolean)
   async deletePost(
-    @Arg("id") id: number,
+    @Arg('id') id: number,
     @Ctx()
     { em }: MyContext
   ): Promise<boolean> {
-    await em.nativeDelete(Post, { id });
-    return true;
+    const res = await em.nativeDelete(Post, { id });
+    return res != 0 ? true : false;
   }
 }
