@@ -44,27 +44,43 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  //* VERIFY
+  @Query(() => User, { nullable: true })
+  async me(@Ctx() { req, em }: MyContext) {
+    // Not logged in
+    if (!req.session.userId) {
+      return null;
+    }
+
+    const user = await em.findOne(User, { id: req.session.userId });
+    return user;
+  }
+
   //* REGISTER
   @Mutation(() => UserResponse) // return string
   async register(
     @Arg('options') options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
-  ) : Promise<UserResponse> {
-    if(options.username.length <= 5) {
+    @Ctx() { em, req }: MyContext
+  ): Promise<UserResponse> {
+    if (options.username.length <= 5) {
       return {
-        errors: [{
-          field: 'username',
-          message: 'length must be greater than 5'
-        }]
-      }
+        errors: [
+          {
+            field: 'username',
+            message: 'length must be greater than 5',
+          },
+        ],
+      };
     }
-    if(options.password.length <= 5) {
+    if (options.password.length <= 5) {
       return {
-        errors: [{
-          field: 'password',
-          message: 'length must be greater than 5'
-        }]
-      }
+        errors: [
+          {
+            field: 'password',
+            message: 'length must be greater than 5',
+          },
+        ],
+      };
     }
     const hashedPassword = await argon2.hash(options.password);
     const user = em.create(User, {
@@ -73,27 +89,32 @@ export class UserResolver {
     });
     try {
       await em.persistAndFlush(user);
-    } catch(error) {
+    } catch (error) {
       // duplicate user
-      if(error.code === '23505') { // || error.detail.includes('already exists')) {
+      if (error.code === '23505') {
+        // || error.detail.includes('already exists')) {
         return {
           errors: [
             {
               field: 'username',
-              message: 'username already taken'
-            }
-          ]
-        }
+              message: 'username already taken',
+            },
+          ],
+        };
       }
     }
-    return {user};
+
+    // set cookie on the user client to keep them logged in
+    req.session.userId = user.id;
+
+    return { user };
   }
 
   //* LOGIN
   @Mutation(() => UserResponse) // return string
   async login(
     @Arg('options') options: UsernamePasswordInput,
-    @Ctx() { em, req }: MyContext
+    @Ctx() { em, req, res }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { username: options.username });
     if (!user) {
@@ -119,7 +140,7 @@ export class UserResolver {
     }
 
     req.session.userId = user.id;
-
+    
     return {
       user,
     };
