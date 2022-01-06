@@ -20,6 +20,7 @@ export class User {
   @Property({ type: 'text', unique: true })
   username!: String;
 
+  // we don't use @Field here. We want to hide password when we share an user data
   @Property({ type: 'text' })
   password!: String;
 }

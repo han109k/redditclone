@@ -11,6 +11,8 @@ import {
   Resolver,
 } from 'type-graphql';
 const argon2 = require('argon2');
+import { EntityManager } from '@mikro-orm/postgresql';
+import { COOKIE_NAME } from '../constants';
 
 // Instead of creating multiple args we can use custom class
 // @Arg("username") username: string
@@ -82,13 +84,27 @@ export class UserResolver {
         ],
       };
     }
+    // hashing password before storing on db
     const hashedPassword = await argon2.hash(options.password);
+
     const user = em.create(User, {
       username: options.username,
       password: hashedPassword,
     });
+    // let user;
     try {
       await em.persistAndFlush(user);
+      // const result = await (em as EntityManager)
+      //   .createQueryBuilder(User)
+      //   .getKnexQuery()
+      //   .insert({
+      //     username: options.username,
+      //     password: hashedPassword,
+      //     created_at: new Date(), // mikroORM converts variable name createdAt to created_at but we need to do it manually here
+      //     updated_at: new Date(),
+      //   })
+      //   .returning('*');
+      // user = result[0];
     } catch (error) {
       // duplicate user
       if (error.code === '23505') {
@@ -140,9 +156,27 @@ export class UserResolver {
     }
 
     req.session.userId = user.id;
-    
+
     return {
       user,
     };
+  }
+
+  //* LOGOUT
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: MyContext) {
+    // clear redis
+    return new Promise((resolve) =>
+      req.session.destroy((err) => {
+        if (err) {
+          console.log(err);
+          resolve(false)
+          return;
+        };
+
+        res.clearCookie(COOKIE_NAME); // clear cookie
+        resolve(true);
+      })
+    );
   }
 }
