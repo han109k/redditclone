@@ -5,10 +5,11 @@ import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 @Resolver()
 export class PostResolver {
   @Query(() => [Post]) // return array of Post
-  posts(
+  async posts(
     @Ctx()
     { em }: MyContext
   ): Promise<Post[]> {
+    // await sleep(3000);
     return em.find(Post, {});
   }
 

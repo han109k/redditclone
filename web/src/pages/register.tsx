@@ -1,11 +1,13 @@
 import { Button, Box } from '@chakra-ui/react';
 import { Form, Formik } from 'formik';
+import { withUrqlClient } from 'next-urql';
 import { useRouter } from 'next/router';
 import React from 'react';
 // import { useMutation } from 'urql';
 import InputField from '../components/InputField';
 import { Wrapper } from '../components/Wrapper';
 import { useRegisterMutation } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 import { toErrorMap } from '../utils/toErrorMap';
 
 interface registerProps {}
@@ -82,4 +84,5 @@ const Register: React.FC<registerProps> = ({}) => {
   );
 };
 
-export default Register;
+// ssr disabled
+export default withUrqlClient(createUrqlClient)(Register);

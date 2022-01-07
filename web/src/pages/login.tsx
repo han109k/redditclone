@@ -1,10 +1,12 @@
 import { Button, Box } from '@chakra-ui/react';
 import { Form, Formik } from 'formik';
+import { withUrqlClient } from 'next-urql';
 import { useRouter } from 'next/router';
 import React from 'react';
 import InputField from '../components/InputField';
 import { Wrapper } from '../components/Wrapper';
 import { useLoginMutation } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 import { toErrorMap } from '../utils/toErrorMap';
 
 const Login: React.FC<{}> = ({}) => {
@@ -60,4 +62,5 @@ const Login: React.FC<{}> = ({}) => {
   );
 };
 
-export default Login;
+// ssr disabled
+export default withUrqlClient(createUrqlClient)(Login);

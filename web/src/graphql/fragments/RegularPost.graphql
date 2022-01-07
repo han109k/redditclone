@@ -1,0 +1,6 @@
+fragment RegularPost on Post {
+  createdAt
+  id
+  title
+  updatedAt
+}
