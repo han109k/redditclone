@@ -18,19 +18,19 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
     // user is not logged in
   } else if (!data?.me) {
     body = (
-      <>
+      <Box>
         <Box color={'whiteAlpha.800'} mr={5}>
           <Link href={'/login'}>Login</Link>
         </Box>
         <Box color={'whiteAlpha.800'} mr={5}>
           <Link href={'/register'}>Register</Link>
         </Box>
-      </>
+      </Box>
     );
     // user is logged in
   } else {
     body = (
-      <Flex color={'whiteAlpha.800'}>
+      <Box>
         <Box>{data.me.username}</Box>
         <Button
           variant={'link'}
@@ -40,7 +40,7 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
         >
           Logout
         </Button>
-      </Flex>
+      </Box>
     );
   }
   return (

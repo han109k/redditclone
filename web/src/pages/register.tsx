@@ -1,4 +1,4 @@
-import { Button, Box } from '@chakra-ui/react';
+import { Button, Box, Flex } from '@chakra-ui/react';
 import { Form, Formik } from 'formik';
 import { withUrqlClient } from 'next-urql';
 import { useRouter } from 'next/router';
@@ -34,13 +34,13 @@ const Register: React.FC<registerProps> = ({}) => {
   // Using GraphQL code generator with URQL plugin
   const [, register] = useRegisterMutation(); // generated graphql
   const router = useRouter();
-  
+
   return (
     <Wrapper variant="small">
       <Formik
-        initialValues={{ username: '', password: '' }}
+        initialValues={{ username: '', email: '', password: '' }}
         onSubmit={async (values, { setErrors }) => {
-          const response = await register(values);
+          const response = await register({ options: values });
           if (response.data?.register.errors) {
             setErrors(toErrorMap(response.data.register.errors));
           } else if (response.data?.register.user) {
@@ -54,11 +54,19 @@ const Register: React.FC<registerProps> = ({}) => {
           <Form>
             {/* Same as div */}
             <InputField
-              name="username"
-              placeholder="username"
-              label="Username"
-              type={'text'}
+              name="email"
+              placeholder="email"
+              label="Email"
+              type={'email'}
             />
+            <Box mt={6}>
+              <InputField
+                name="username"
+                placeholder="username"
+                label="Username"
+                type={'text'}
+              />
+            </Box>
             <Box mt={6}>
               <InputField
                 name="password"
@@ -67,16 +75,18 @@ const Register: React.FC<registerProps> = ({}) => {
                 type="password"
               />
             </Box>
-            <Button
-              type="submit"
-              bg={'whatsapp.100'}
-              color={'whatsapp.600'}
-              isLoading={isSubmitting}
-              mt={6}
-              mx={'auto'}
-            >
-              Register
-            </Button>
+            <Flex>
+              <Button
+                type="submit"
+                bg={'whatsapp.100'}
+                color={'whatsapp.600'}
+                isLoading={isSubmitting}
+                mt={6}
+                mx={'auto'}
+              >
+                Register
+              </Button>
+            </Flex>
           </Form>
         )}
       </Formik>

@@ -1,0 +1,9 @@
+# UserResponse => user resolver UserResponse ObjectType
+fragment RegularUserResponse on UserResponse {
+  errors {
+    ...RegularError
+  }
+  user {
+    ...RegularUser
+  }
+}

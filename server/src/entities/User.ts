@@ -16,9 +16,13 @@ export class User {
   @Property({ type: 'date', onUpdate: () => new Date() })
   updatedAt = new Date();
 
-  @Field(() => String) // type-graphQL
+  @Field() // type-graphQL
   @Property({ type: 'text', unique: true })
   username!: String;
+
+  @Field() // type-graphQL
+  @Property({ type: 'text', unique: true })
+  email!: String;
 
   // we don't use @Field here. We want to hide password when we share an user data
   @Property({ type: 'text' })

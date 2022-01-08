@@ -12,14 +12,13 @@ import { buildSchema } from 'type-graphql';
 import { UserResolver } from './resolvers/user';
 import { PostResolver } from './resolvers/post';
 
-import { createClient } from 'redis';
+import Redis from 'ioredis';
 import session from 'express-session';
-import { MyContext } from './types';
 
 const main = async () => {
   // console.log("dirname: ", __dirname);
 
-  //
+  // mikroORM
   const orm = await MikroORM.init(mikroOrmConfig);
   // Migrate up to the latest version
   await orm.getMigrator().up();
@@ -35,13 +34,12 @@ const main = async () => {
   app.use(cors(corsOptions));
 
   const RedisStore = require('connect-redis')(session);
-  const redisClient = createClient({ legacyMode: true }); //kept blank so that default options are available
-  await redisClient.connect();
+  const redis = new Redis(); //kept blank so that default options are available
 
   app.use(
     session({
       name: COOKIE_NAME,
-      store: new RedisStore({ client: redisClient, disableTouch: true }),
+      store: new RedisStore({ client: redis, disableTouch: true }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // one week
         httpOnly: true,
@@ -75,7 +73,7 @@ const main = async () => {
     }),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
     // passing express request and response objects to our context
-    context: ({ req, res }) => ({ em: orm.em, req, res }),
+    context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
   });
 
   // Create graphQL end point
