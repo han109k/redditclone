@@ -1,30 +1,34 @@
 import 'reflect-metadata';
-import { MikroORM } from '@mikro-orm/core';
 import { COOKIE_NAME, __prod__ } from './constants';
-// import { Post } from "./entities/Post";
-import mikroOrmConfig from './mikro-orm.config';
 import express from 'express';
 import cors from 'cors';
+import {createConnection} from 'typeorm'
 import { ApolloServer } from 'apollo-server-express';
 // Uncomment this if you want to access apollo playground
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core/dist/plugin/landingPage/graphqlPlayground';
 import { buildSchema } from 'type-graphql';
+import Redis from 'ioredis';
+import session from 'express-session';
+
 import { UserResolver } from './resolvers/user';
 import { PostResolver } from './resolvers/post';
 
-import Redis from 'ioredis';
-import session from 'express-session';
+import { Post } from './entities/Post';
+import { User } from './entities/User';
 
 const main = async () => {
   // console.log("dirname: ", __dirname);
 
-  // mikroORM
-  const orm = await MikroORM.init(mikroOrmConfig);
-  // Migrate up to the latest version
-  await orm.getMigrator().up();
-  // const post = orm.em.create(Post, { title: "my first post" });
-  // // insert into database
-  // await orm.em.persistAndFlush(post);
+  // typeORM
+  const conn = createConnection({
+    type: 'postgres',
+    database: 'reddit2', // typeORM
+    username: 'postgres',
+    password: 'asd1234',
+    logging: true,
+    synchronize: true, // create tables automatically without running migrations
+    entities: [Post, User]
+  })
 
   const app = express();
   const corsOptions = {
@@ -73,7 +77,7 @@ const main = async () => {
     }),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
     // passing express request and response objects to our context
-    context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
+    context: ({ req, res }) => ({ req, res, redis }),
   });
 
   // Create graphQL end point

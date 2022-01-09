@@ -1,22 +1,29 @@
-import { Entity, Property, PrimaryKey } from '@mikro-orm/core';
 import { Field, ObjectType } from 'type-graphql';
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @ObjectType() // Turn class into graphQL type
 @Entity() // ctrl + .
-export class Post {
+export class Post extends BaseEntity {
   @Field() // type-graphQL exposing to graphQL schema
-  @PrimaryKey()
+  @PrimaryGeneratedColumn()
   id!: number;
 
   @Field(() => String) // type-graphQL
-  @Property({ type: 'date' }) // mikro-orm
-  createdAt = new Date();
+  @CreateDateColumn() // typeORM
+  createdAt: Date;
 
   @Field(() => String) // type-graphQL
-  @Property({ type: 'date', onUpdate: () => new Date() })
-  updatedAt = new Date();
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @Field() // type-graphQL
-  @Property({ type: 'text' })
+  @Column({ type: 'text' })
   title!: String;
 }
