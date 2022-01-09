@@ -24,7 +24,12 @@ const Login: React.FC<{}> = ({}) => {
             setErrors(toErrorMap(response.data.login.errors));
           } else if (response.data?.login.user) {
             // Logged in
-            router.push('/');
+            // Redirect or not
+            if (typeof router.query.next === 'string') {
+              router.push(router.query?.next);
+            } else {
+              router.push('/');
+            }
           }
         }}
       >

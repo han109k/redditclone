@@ -11,7 +11,7 @@ import { createUrqlClient } from '../../utils/createUrqlClient';
 import { toErrorMap } from '../../utils/toErrorMap';
 
 // http://localhost:3000/change-password/{token}
-const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
+const ChangePassword: NextPage<{ token: string }> = () => {
   const router = useRouter();
   const [, changePassword] = useChangePasswordMutation();
   const [tokenError, setTokenError] = useState('');
@@ -22,7 +22,8 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
         onSubmit={async (values, { setErrors }) => {
           const response = await changePassword({
             newPassword: values.newPassword,
-            token,
+            token:
+              typeof router.query.token === 'string' ? router.query.token : '',
           });
           if (response.data?.changePassword.errors) {
             const errorMap = toErrorMap(response.data.changePassword.errors);
@@ -46,7 +47,11 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
               label="Enter new password"
               type="password"
             />
-            {tokenError && <Box mt={4} textAlign={'center'} color={'red.500'}>{tokenError}!</Box>}
+            {tokenError && (
+              <Box mt={4} textAlign={'center'} color={'red.500'}>
+                {tokenError}!
+              </Box>
+            )}
             <Button
               type="submit"
               bg={'whatsapp.100'}
@@ -65,11 +70,11 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
 };
 
 // Gets any query parameters then passes it to component
-ChangePassword.getInitialProps = ({ query }) => {
-  return {
-    token: query.token as string,
-  };
-};
+// ChangePassword.getInitialProps = ({ query }) => {
+//   return {
+//     token: query.token as string,
+//   };
+// };
 
 // no ssr
 export default withUrqlClient(createUrqlClient)(ChangePassword);

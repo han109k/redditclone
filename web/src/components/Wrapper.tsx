@@ -2,8 +2,9 @@
 import React from 'react';
 import { Flex } from '@chakra-ui/react';
 
+export type WrapperVariant = 'small' | 'regular';
 interface WrapperProps {
-  variant: 'small' | 'regular';
+  variant?: WrapperVariant;
 }
 
 export const Wrapper: React.FC<WrapperProps> = ({

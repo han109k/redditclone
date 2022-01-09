@@ -4,9 +4,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Post } from './Post';
 
 @ObjectType() // Turn class into graphQL type
 @Entity() // ctrl + .
@@ -15,23 +17,26 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Field(() => String) // type-graphQL
-  @CreateDateColumn() // typeORM
-  createdAt = Date;
-
-  @Field(() => String) // type-graphQL
-  @UpdateDateColumn()
-  updatedAt = Date;
-
-  @Field() // type-graphQL
+  @Field() 
   @Column({ unique: true })
-  username!: String;
+  username!: string;
 
-  @Field() // type-graphQL
+  @Field()
   @Column({ unique: true })
-  email!: String;
+  email!: string;
 
   // we don't use @Field here. We want to hide password when we share an user data
   @Column()
-  password!: String;
+  password!: string;
+
+  @OneToMany(() => Post, post => post.creator)
+  posts: Post[];
+
+  @Field(() => String) // return type string
+  @CreateDateColumn() // typeORM
+  createdAt: Date;
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
