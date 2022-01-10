@@ -37,7 +37,7 @@ class UserResponse {
   user?: User;
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
   //* CHANGE PASSWORD
   @Mutation(() => UserResponse)

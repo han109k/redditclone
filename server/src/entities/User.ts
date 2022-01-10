@@ -11,13 +11,13 @@ import {
 import { Post } from './Post';
 
 @ObjectType() // Turn class into graphQL type
-@Entity() // ctrl + .
+@Entity() // ctrl + . to import
 export class User extends BaseEntity {
   @Field() // type-graphQL exposing to graphQL schema
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Field() 
+  @Field()
   @Column({ unique: true })
   username!: string;
 
@@ -29,7 +29,7 @@ export class User extends BaseEntity {
   @Column()
   password!: string;
 
-  @OneToMany(() => Post, post => post.creator)
+  @OneToMany(() => Post, (post) => post.creator)
   posts: Post[];
 
   @Field(() => String) // return type string

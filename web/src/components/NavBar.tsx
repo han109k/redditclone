@@ -18,21 +18,22 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
     // user is not logged in
   } else if (!data?.me) {
     body = (
-      <Box>
+      <Flex>
         <Box color={'whiteAlpha.800'} mr={5}>
           <Link href={'/login'}>Login</Link>
         </Box>
         <Box color={'whiteAlpha.800'} mr={5}>
           <Link href={'/register'}>Register</Link>
         </Box>
-      </Box>
+      </Flex>
     );
     // user is logged in
   } else {
     body = (
-      <Box>
+      <Flex>
         <Box>{data.me.username}</Box>
         <Button
+          color={'whiteAlpha.800'}
           variant={'link'}
           onClick={() => logout()}
           isLoading={logoutFetching}
@@ -40,7 +41,7 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
         >
           Logout
         </Button>
-      </Box>
+      </Flex>
     );
   }
   return (

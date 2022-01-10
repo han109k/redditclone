@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { COOKIE_NAME, __prod__ } from './constants';
 import express from 'express';
 import cors from 'cors';
-import {createConnection} from 'typeorm'
+import { createConnection } from 'typeorm';
 import { ApolloServer } from 'apollo-server-express';
 // Uncomment this if you want to access apollo playground
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core/dist/plugin/landingPage/graphqlPlayground';
@@ -15,6 +15,7 @@ import { PostResolver } from './resolvers/post';
 
 import { Post } from './entities/Post';
 import { User } from './entities/User';
+import path from 'path';
 
 const main = async () => {
   // console.log("dirname: ", __dirname);
@@ -27,8 +28,12 @@ const main = async () => {
     password: 'asd1234',
     logging: true,
     synchronize: true, // create tables automatically without running migrations
-    entities: [Post, User]
-  })
+    entities: [Post, User],
+    migrations: [path.join(__dirname, './migrations/*')],
+  });
+  (await conn).runMigrations();
+
+  // Post.delete({});
 
   const app = express();
   const corsOptions = {
@@ -90,12 +95,6 @@ const main = async () => {
   app.listen(4000, () => {
     console.log('Server running on port 4000');
   });
-
-  // const posts = await orm.em.find(Post, {});
-  // console.log(posts);
-
-  // console.log("------ sql 2 -------");
-  // await orm.em.nativeInsert(Post, { title: "my first post 2" });
 };
 
 main().catch((error) => console.log(error));

@@ -11,7 +11,7 @@ import {
 import { User } from './User';
 
 @ObjectType() // Turn class into graphQL type
-@Entity() // ctrl + .
+@Entity() // ctrl + . to import
 export class Post extends BaseEntity {
   @Field() // type-graphQL exposing to graphQL schema
   @PrimaryGeneratedColumn()
