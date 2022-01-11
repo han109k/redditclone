@@ -1,13 +1,15 @@
 import { User } from '../entities/User';
-import { MyContext } from 'src/types';
+import { MyContext } from '../types';
 import {
   Arg,
   Ctx,
   Field,
+  FieldResolver,
   Mutation,
   ObjectType,
   Query,
   Resolver,
+  Root,
 } from 'type-graphql';
 import argon2 from 'argon2';
 import { COOKIE_NAME, FORGOT_PASSWORD_PREFIX } from '../constants';
@@ -39,6 +41,18 @@ class UserResponse {
 
 @Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() user: User, @Ctx() { req }: MyContext) {
+    // Checking if the current user is also the owner of the posts.
+    // If it is then send them their private data (email, etc.)
+    if (req.session.userId === user.id) {
+      return user.email;
+    }
+
+    // If the current user is not the owner of the posts than don't show them the email field
+    return '';
+  }
+
   //* CHANGE PASSWORD
   @Mutation(() => UserResponse)
   async changePassword(

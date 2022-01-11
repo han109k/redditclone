@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Upvote } from './Upvote';
 import { User } from './User';
 
 @ObjectType() // Turn class into graphQL type
@@ -18,7 +20,7 @@ export class Post extends BaseEntity {
   id!: number;
 
   @Field()
-  @Column()
+  @Column() // typeORM
   creatorId: number;
 
   @Field()
@@ -33,8 +35,12 @@ export class Post extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   points!: number;
 
+  @Field(() => User)
   @ManyToOne(() => User, (user) => user.posts)
   creator: User; // foreign key
+
+  @OneToMany(() => Upvote, (upvote) => upvote.post)
+  upvotes: Upvote[];
 
   @Field(() => String) // return type
   @CreateDateColumn() // typeORM

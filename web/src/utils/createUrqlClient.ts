@@ -30,17 +30,18 @@ export const errorExchange: Exchange =
     );
   };
 
+//* PAGINATION
 // https://github.com/FormidableLabs/urql/blob/main/exchanges/graphcache/src/extras/simplePagination.ts
 const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
     const { parentKey: entityKey, fieldName } = info;
-    console.log(entityKey, fieldName); // Query, posts
+    // console.log(entityKey, fieldName); // Query, posts
 
     const allFields = cache.inspectFields(entityKey); // all the fields in the cache
-    console.log(allFields);
+    // console.log('all fields', allFields);
 
     const fieldInfos = allFields.filter((info) => info.fieldName === fieldName); // filter
-    console.log('fieldInfos', fieldInfos);
+    // console.log('fieldInfos', fieldInfos);
     const size = fieldInfos.length;
     if (size === 0) {
       return undefined;
@@ -48,11 +49,11 @@ const cursorPagination = (): Resolver => {
 
     // console.log('field args', fieldArgs); // limit: 10
     const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`;
-    console.log('key we created', fieldKey);
+    // console.log('key we created', fieldKey);
     const isItInTheCache = cache.resolve(entityKey, fieldKey);
-    console.log('isItInTheCache:', isItInTheCache);
+    // console.log('isItInTheCache:', isItInTheCache);
     info.partial = !isItInTheCache;
-    console.log('info.parital', info.partial);
+    // console.log('info.parital', info.partial);
 
     let hasMore: boolean = true;
     const results: string[] = [];
@@ -61,7 +62,7 @@ const cursorPagination = (): Resolver => {
       // console.log('key', key);
       const data = cache.resolve(key, 'posts') as string[];
       const _hasMore = cache.resolve(key, 'hasMore');
-      console.log('data', data, _hasMore); // post with ids
+      // console.log('data', data, _hasMore); // post with ids
       if (!_hasMore) {
         hasMore = _hasMore as boolean;
       }
@@ -69,58 +70,6 @@ const cursorPagination = (): Resolver => {
     });
 
     return { __typename: 'PaginatedPosts', hasMore, posts: results };
-
-    // const visited = new Set();
-    // let result: NullArray<string> = [];
-    // let prevOffset: number | null = null;
-
-    // for (let i = 0; i < size; i++) {
-    //   const { fieldKey, arguments: args } = fieldInfos[i];
-    //   if (args === null || !compareArgs(fieldArgs, args)) {
-    //     continue;
-    //   }
-
-    //   const links = cache.resolve(entityKey, fieldKey) as string[];
-    //   const currentOffset = args[offsetArgument];
-
-    //   if (
-    //     links === null ||
-    //     links.length === 0 ||
-    //     typeof currentOffset !== 'number'
-    //   ) {
-    //     continue;
-    //   }
-
-    //   const tempResult: NullArray<string> = [];
-
-    //   for (let j = 0; j < links.length; j++) {
-    //     const link = links[j];
-    //     if (visited.has(link)) continue;
-    //     tempResult.push(link);
-    //     visited.add(link);
-    //   }
-
-    //   if (
-    //     (!prevOffset || currentOffset > prevOffset) ===
-    //     (mergeMode === 'after')
-    //   ) {
-    //     result = [...result, ...tempResult];
-    //   } else {
-    //     result = [...tempResult, ...result];
-    //   }
-
-    //   prevOffset = currentOffset;
-    // }
-
-    // const hasCurrentPage = cache.resolve(entityKey, fieldName, fieldArgs);
-    // if (hasCurrentPage) {
-    //   return result;
-    // } else if (!(info as any).store.schema) {
-    //   return undefined;
-    // } else {
-    //   info.partial = true;
-    //   return result;
-    // }
   };
 };
 
@@ -143,6 +92,22 @@ export const createUrqlClient = (ssrExchange: any) => ({
       },
       updates: {
         Mutation: {
+          // createPost(createPost.graphql) send server a request. Saves a new post to our db
+          // invalidates cache on client side then index.ts(client-side) re-fetches from graphQL
+          createPost: (_result, args, cache, info) => {
+            const queryFields = cache.inspectFields('Query'); // Query fields
+            const fieldInfos = queryFields.filter(
+              (info) => info.fieldName === 'posts'
+            ); // filter
+            fieldInfos.forEach((fi) => {
+              cache.invalidate('Query', 'posts', fi.arguments || {});
+            });
+            console.log(
+              'cache inspectFields of Query',
+              cache.inspectFields('Query')
+            );
+          },
+          // delete { me } from cache
           logout: (_result, args, cache, info) => {
             betterUpdateQuery<LogoutMutation, MeQuery>(
               cache,
@@ -151,6 +116,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
               () => ({ me: null })
             );
           },
+          //
           login: (_result, args, cache, info) => {
             betterUpdateQuery<LoginMutation, MeQuery>(
               cache,
@@ -167,6 +133,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
               }
             );
           },
+          //
           register: (_result, args, cache, info) => {
             betterUpdateQuery<RegisterMutation, MeQuery>(
               cache,

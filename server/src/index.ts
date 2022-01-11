@@ -16,6 +16,7 @@ import { PostResolver } from './resolvers/post';
 import { Post } from './entities/Post';
 import { User } from './entities/User';
 import path from 'path';
+import { Upvote } from './entities/Upvote';
 
 const main = async () => {
   // console.log("dirname: ", __dirname);
@@ -28,7 +29,7 @@ const main = async () => {
     password: 'asd1234',
     logging: true,
     synchronize: true, // create tables automatically without running migrations
-    entities: [Post, User],
+    entities: [Post, User, Upvote],
     migrations: [path.join(__dirname, './migrations/*')],
   });
   (await conn).runMigrations();
