@@ -4,6 +4,7 @@ import NextLink from 'next/link';
 import {
   RegularPostFragment,
   useDeletePostMutation,
+  useMeQuery,
   useVoteMutation,
 } from '../generated/graphql';
 
@@ -20,6 +21,8 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
     'upvote-loading' | 'downvote-loading' | 'not-loading'
   >('not-loading');
   // operation object includes context(fetch, fetchOptions ...), query, variables(postId, value)
+  // const [{operation}] = useMeQuery()
+  const [{ data: me }] = useMeQuery();
   const [, vote] = useVoteMutation();
   const [, deletePost] = useDeletePostMutation();
 
@@ -29,6 +32,7 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
       justifyContent={'space-between'}
       background={'gray.100'}
       py={2}
+      width="80px"
     >
       <IconButton
         variant={post.voteStatus === 1 ? 'solid' : 'ghost'}
@@ -36,6 +40,8 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
         aria-label="Upvote"
         fontSize="20px"
         height="20px"
+        width="20px"
+        mx={'auto'}
         icon={<FiChevronUp />}
         onClick={async () => {
           setLoading('upvote-loading');
@@ -57,6 +63,8 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
         aria-label="Downvote"
         fontSize="20px"
         height="20px"
+        width="20px"
+        mx={'auto'}
         icon={<FiChevronDown />}
         onClick={async () => {
           setLoading('downvote-loading');
@@ -69,28 +77,30 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
         disabled={post.voteStatus === -1 ? true : false}
         isLoading={loading === 'downvote-loading'}
       />
-      <Flex mt={2} maxW="90px">
-        <IconButton
-          aria-label="delete post"
-          icon={<FaTrashAlt />}
-          width="5px"
-          height="15px"
-          fontSize="15px"
-          textColor={'red.500'}
-          onClick={() => {
-            deletePost({ id: post.id });
-          }}
-        ></IconButton>
-        <NextLink href="post/edit/[id]" as={`/post/edit/${post.id}`}>
+      {me?.me?.id === post.creator.id ? (
+        <Flex mt={2}>
           <IconButton
-            aria-label="edit post"
-            icon={<FaEdit />}
+            aria-label="delete post"
+            icon={<FaTrashAlt />}
+            width="5px"
             height="15px"
             fontSize="15px"
-            textColor={'blue.500'}
+            textColor={'red.500'}
+            onClick={() => {
+              deletePost({ id: post.id });
+            }}
           ></IconButton>
-        </NextLink>
-      </Flex>
+          <NextLink href="post/edit/[id]" as={`/post/edit/${post.id}`}>
+            <IconButton
+              aria-label="edit post"
+              icon={<FaEdit />}
+              height="15px"
+              fontSize="15px"
+              textColor={'blue.500'}
+            ></IconButton>
+          </NextLink>
+        </Flex>
+      ) : null}
     </Flex>
   );
 };
