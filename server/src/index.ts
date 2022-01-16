@@ -54,9 +54,9 @@ const main = async () => {
         maxAge: 1000 * 60 * 60 * 24 * 7, // one week
         httpOnly: true,
         sameSite: 'lax', // default 'lax' csrf
-        secure: __prod__, // cookie only works in https
+        // secure: __prod__, // cookie only works in https / use this in production
       },
-      saveUninitialized: false,
+      saveUninitialized: true,
       secret: 'thisshouldbesecret',
       resave: false,
     })

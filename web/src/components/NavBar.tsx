@@ -1,5 +1,5 @@
-import { Box, Button, Flex } from '@chakra-ui/react';
-import Link from 'next/link';
+import { Box, Button, Flex, Heading, Link } from '@chakra-ui/react';
+import NextLink from 'next/link';
 import React from 'react';
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
 import { isServerSide } from '../utils/isServerSide';
@@ -9,7 +9,7 @@ interface NavBarProps {}
 const NavBar: React.FC<NavBarProps> = ({}) => {
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
   const [{ data, fetching }] = useMeQuery({
-    pause: isServerSide,
+    pause: isServerSide, // this means for 'me' query don't use cache (go make a request)
   });
 
   let body = null;
@@ -20,17 +20,23 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
     body = (
       <Flex>
         <Box color={'whiteAlpha.800'} mr={5}>
-          <Link href={'/login'}>Login</Link>
+          <NextLink href={'/login'}>Login</NextLink>
         </Box>
         <Box color={'whiteAlpha.800'} mr={5}>
-          <Link href={'/register'}>Register</Link>
+          <NextLink href={'/register'}>Register</NextLink>
         </Box>
       </Flex>
     );
     // user is logged in
   } else {
     body = (
-      <Flex>
+      <Flex alignItems={'center'}>
+        <Box mr={4}>
+          <NextLink href="/create-post">
+            <Button>Create Post</Button>
+          </NextLink>
+        </Box>
+
         <Box>{data.me.username}</Box>
         <Button
           color={'whiteAlpha.800'}
@@ -52,8 +58,18 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
       top={0}
       zIndex={1}
       justifyContent={'end'}
+      align={'center'}
     >
-      {body}
+      <Flex maxW={800} alignItems={'center'} flex={1} m={'auto'}>
+        <Box mr="auto" color={'whiteAlpha.800'}>
+          <NextLink href="/">
+            <Link>
+              <Heading>Reddit2</Heading>
+            </Link>
+          </NextLink>
+        </Box>
+        {body}
+      </Flex>
     </Flex>
   );
 };

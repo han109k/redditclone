@@ -6,15 +6,19 @@ import {
   fetchExchange,
   stringifyVariables,
 } from 'urql';
+import { gql } from '@urql/core';
 import { pipe, tap } from 'wonka';
 import {
+  DeletePostMutationVariables,
   LoginMutation,
   LogoutMutation,
   MeDocument,
   MeQuery,
   RegisterMutation,
+  VoteMutationVariables,
 } from '../generated/graphql';
 import { betterUpdateQuery } from '../utils/betterUpdateQuery';
+import { isServerSide } from './isServerSide';
 
 export const errorExchange: Exchange =
   ({ forward }) =>
@@ -74,87 +78,134 @@ const cursorPagination = (): Resolver => {
 };
 
 // urql config.
-export const createUrqlClient = (ssrExchange: any) => ({
-  url: 'http://localhost:4000/graphql',
-  fetchOptions: {
-    credentials: 'include' as const,
-  },
-  exchanges: [
-    dedupExchange,
-    cacheExchange({
-      keys: {
-        PaginatedPosts: () => null,
-      },
-      resolvers: {
-        Query: {
-          posts: cursorPagination(), // posts -> posts.graphql
+export const createUrqlClient = (ssrExchange: any, ctx: any) => {
+  // console.log(ctx); // show us req, res, cookie and other important information
+  let cookie = '';
+  if (isServerSide) {
+    cookie = ctx.req.headers.cookie;
+  }
+
+  return {
+    url: 'http://localhost:4000/graphql',
+    fetchOptions: {
+      credentials: 'include' as const,
+      headers: cookie ? { cookie } : undefined,
+    },
+    exchanges: [
+      dedupExchange,
+      cacheExchange({
+        keys: {
+          PaginatedPosts: () => null,
         },
-      },
-      updates: {
-        Mutation: {
-          // createPost(createPost.graphql) send server a request. Saves a new post to our db
-          // invalidates cache on client side then index.ts(client-side) re-fetches from graphQL
-          createPost: (_result, args, cache, info) => {
-            const queryFields = cache.inspectFields('Query'); // Query fields
-            const fieldInfos = queryFields.filter(
-              (info) => info.fieldName === 'posts'
-            ); // filter
-            fieldInfos.forEach((fi) => {
-              cache.invalidate('Query', 'posts', fi.arguments || {});
-            });
-            console.log(
-              'cache inspectFields of Query',
-              cache.inspectFields('Query')
-            );
-          },
-          // delete { me } from cache
-          logout: (_result, args, cache, info) => {
-            betterUpdateQuery<LogoutMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              () => ({ me: null })
-            );
-          },
-          //
-          login: (_result, args, cache, info) => {
-            betterUpdateQuery<LoginMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              (result, query) => {
-                if (result.login.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.login.user,
-                  };
-                }
-              }
-            );
-          },
-          //
-          register: (_result, args, cache, info) => {
-            betterUpdateQuery<RegisterMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              (result, query) => {
-                if (result.register.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.register.user,
-                  };
-                }
-              }
-            );
+        resolvers: {
+          Query: {
+            posts: cursorPagination(), // posts -> posts.graphql
           },
         },
-      },
-    }),
-    errorExchange,
-    ssrExchange,
-    fetchExchange,
-  ],
-});
+        updates: {
+          Mutation: {
+            deletePost: (_result, args, cache, info) => {
+              // delete post from cache
+              cache.invalidate({
+                __typename: 'Post',
+                id: (args as DeletePostMutationVariables).id,
+              });
+            },
+            vote: (_result, args, cache, info) => {
+              const { postId, value } = args as VoteMutationVariables;
+              const data = cache.readFragment(
+                gql`
+                  fragment _ on Post {
+                    id
+                    points
+                    voteStatus
+                  }
+                `,
+                { id: postId }
+              );
+              console.log('data from cache', data);
+              if (data) {
+                if (data.voteStatus === value) return;
+                const newPoints =
+                  data.points + (!data.voteStatus ? 1 : 2) * value;
+                console.log(newPoints);
+
+                cache.writeFragment(
+                  gql`
+                    fragment __ on Post {
+                      # doesn't matter what you selected
+                      points
+                      voteStatus
+                    }
+                  `,
+                  { id: postId, points: newPoints, voteStatus: value }
+                );
+              }
+            },
+            // createPost(createPost.graphql) send server a request. Saves a new post to our db
+            // invalidates cache on client side then index.ts(client-side) re-fetches from graphQL
+            createPost: (_result, args, cache, info) => {
+              const queryFields = cache.inspectFields('Query'); // Query fields
+              const fieldInfos = queryFields.filter(
+                (info) => info.fieldName === 'posts'
+              ); // filter
+              fieldInfos.forEach((fi) => {
+                cache.invalidate('Query', 'posts', fi.arguments || {});
+              });
+              console.log(
+                'cache inspectFields of Query',
+                cache.inspectFields('Query')
+              );
+            },
+            // delete { me } from cache
+            logout: (_result, args, cache, info) => {
+              betterUpdateQuery<LogoutMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                _result,
+                () => ({ me: null })
+              );
+            },
+            //
+            login: (_result, args, cache, info) => {
+              betterUpdateQuery<LoginMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                _result,
+                (result, query) => {
+                  if (result.login.errors) {
+                    return query;
+                  } else {
+                    return {
+                      me: result.login.user,
+                    };
+                  }
+                }
+              );
+            },
+            //
+            register: (_result, args, cache, info) => {
+              betterUpdateQuery<RegisterMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                _result,
+                (result, query) => {
+                  if (result.register.errors) {
+                    return query;
+                  } else {
+                    return {
+                      me: result.register.user,
+                    };
+                  }
+                }
+              );
+            },
+          },
+        },
+      }),
+      errorExchange,
+      ssrExchange,
+      fetchExchange,
+    ],
+  };
+};

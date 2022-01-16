@@ -5,7 +5,6 @@ import Router from 'next/router';
 // custom hook for checking the client is currently logged in
 const useIsAuth = () => {
   const [{ data, fetching }] = useMeQuery();
-  console.log(Router);
 
   useEffect(() => {
     if (!fetching && !data?.me) {

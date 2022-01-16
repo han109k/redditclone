@@ -8,11 +8,13 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { withUrqlClient } from 'next-urql';
-import Layout from '../components/Layout';
-import { usePostsQuery } from '../generated/graphql';
-import { createUrqlClient } from '../utils/createUrqlClient';
 import NextLink from 'next/link';
 import { useState } from 'react';
+import Layout from '../components/Layout';
+// Components
+import VoteSection from '../components/VoteSection';
+import { usePostsQuery } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 
 const Index = () => {
   const [variables, setVariables] = useState({
@@ -30,55 +32,57 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex direction={'column'}>
-        <Box display={'flex'}>
-          <Heading>Reddit2</Heading>
-          <NextLink href="/create-post">
-            <Link my="auto" ml="auto" textDecoration={'underline'}>
-              Create Post
-            </Link>
-          </NextLink>
-        </Box>
-        <Box textAlign={'center'} my={6} fontWeight={'bold'}>
-          Posts
-        </Box>
-        {!data && fetching ? (
-          <div>loading...</div>
-        ) : (
-          // Posts
-          <Stack spacing={8}>
-            {data!.posts.posts.map((p) => (
-              <Box key={p.id} p={5} shadow="md" borderWidth="1px">
-                <Heading fontSize="xl">{p.title}</Heading>
-                <Text fontWeight={'light'} fontSize={'x-small'}>
-                  posted by {p.creator.username}
-                </Text>
-                <Text mt={4}>{p.textSnippet}...</Text>
-              </Box>
-            ))}
-          </Stack>
-        )}
-        {data && data.posts.hasMore ? (
-          <Flex>
-            <Button
-              isLoading={fetching}
-              fontWeight={'light'}
-              fontSize={'sm'}
-              my={8}
-              mx={'auto'}
-              onClick={() => {
-                setVariables({
-                  limit: variables.limit,
-                  cursor:
-                    data.posts.posts[data.posts.posts.length - 1].createdAt,
-                });
-              }}
-            >
-              Load more
-            </Button>
-          </Flex>
-        ) : null}
-      </Flex>
+      <Box textAlign={'center'} mb={6} fontWeight={'bold'}>
+        <Heading>Posts</Heading>
+      </Box>
+      {!data && fetching ? (
+        <div>loading...</div>
+      ) : (
+        // Posts
+        <Stack spacing={8}>
+          {data!.posts.posts.map((p) =>
+            // after deletion p will be null so it will be problem when rendering
+            // so check before!
+            !p ? null : (
+              <Flex key={p.id} shadow="md" borderWidth="1px">
+                {/* Upvote downvote */}
+                <VoteSection post={p} />
+                {/* Post */}
+                <Flex direction={'column'} ml={'1'} py={3}>
+                  <NextLink href="/post/[id]" as={`/post/${p.id}`}>
+                    <Link>
+                      <Heading fontSize="xl">{p.title}</Heading>
+                    </Link>
+                  </NextLink>
+                  <Text fontWeight={'light'} fontSize={'x-small'}>
+                    posted by {p.creator.username}
+                  </Text>
+                  <Text mt={4}>{p.textSnippet}...</Text>
+                </Flex>
+              </Flex>
+            )
+          )}
+        </Stack>
+      )}
+      {data && data.posts.hasMore ? (
+        <Flex>
+          <Button
+            isLoading={fetching}
+            fontWeight={'light'}
+            fontSize={'sm'}
+            my={8}
+            mx={'auto'}
+            onClick={() => {
+              setVariables({
+                limit: variables.limit,
+                cursor: data.posts.posts[data.posts.posts.length - 1].createdAt,
+              });
+            }}
+          >
+            Load more
+          </Button>
+        </Flex>
+      ) : null}
     </Layout>
   );
 };
