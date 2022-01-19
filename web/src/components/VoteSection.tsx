@@ -1,16 +1,8 @@
 import { Flex, IconButton, Text } from '@chakra-ui/react';
 import React, { useState } from 'react';
-import NextLink from 'next/link';
-import {
-  RegularPostFragment,
-  useDeletePostMutation,
-  useMeQuery,
-  useVoteMutation,
-} from '../generated/graphql';
-
-// icons
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { RegularPostFragment, useVoteMutation } from '../generated/graphql';
+import EditDeleteButtons from './EditDeleteButtons';
 
 interface VoteSectionProps {
   post: RegularPostFragment;
@@ -22,9 +14,7 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
   >('not-loading');
   // operation object includes context(fetch, fetchOptions ...), query, variables(postId, value)
   // const [{operation}] = useMeQuery()
-  const [{ data: me }] = useMeQuery();
   const [, vote] = useVoteMutation();
-  const [, deletePost] = useDeletePostMutation();
 
   return (
     <Flex
@@ -77,30 +67,9 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
         disabled={post.voteStatus === -1 ? true : false}
         isLoading={loading === 'downvote-loading'}
       />
-      {me?.me?.id === post.creator.id ? (
-        <Flex mt={2}>
-          <IconButton
-            aria-label="delete post"
-            icon={<FaTrashAlt />}
-            width="5px"
-            height="15px"
-            fontSize="15px"
-            textColor={'red.500'}
-            onClick={() => {
-              deletePost({ id: post.id });
-            }}
-          ></IconButton>
-          <NextLink href="post/edit/[id]" as={`/post/edit/${post.id}`}>
-            <IconButton
-              aria-label="edit post"
-              icon={<FaEdit />}
-              height="15px"
-              fontSize="15px"
-              textColor={'blue.500'}
-            ></IconButton>
-          </NextLink>
-        </Flex>
-      ) : null}
+      <Flex mt={2}>
+        <EditDeleteButtons id={post.id} creatorId={post.creator.id} />
+      </Flex>
     </Flex>
   );
 };

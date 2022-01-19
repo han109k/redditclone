@@ -33,11 +33,12 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
       <Flex alignItems={'center'}>
         <Box mr={4}>
           <NextLink href="/create-post">
-            <Button>Create Post</Button>
+            <Button size={'sm'} color={'blackAlpha.800'}>
+              Create Post
+            </Button>
           </NextLink>
         </Box>
-
-        <Box>{data.me.username}</Box>
+        <Box my={'auto'}>{data.me.username}</Box>
         <Button
           color={'whiteAlpha.800'}
           variant={'link'}
@@ -64,7 +65,7 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
         <Box mr="auto" color={'whiteAlpha.800'}>
           <NextLink href="/">
             <Link>
-              <Heading>Reddit2</Heading>
+              <Heading size={'xl'}>Reddit2</Heading>
             </Link>
           </NextLink>
         </Box>
