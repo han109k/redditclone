@@ -1,3 +1,4 @@
+import { User } from '../entities/User';
 import {
   Arg,
   Ctx,
@@ -41,6 +42,12 @@ export class PostResolver {
   @FieldResolver(() => String) // type-graphql
   textSnippet(@Root() root: Post) {
     return root.text.slice(0, 50);
+  }
+
+  @FieldResolver(() => User)
+  creator(@Root() post: Post) {
+    // given creator id on the post find user
+    return User.findOne(post.creatorId);
   }
 
   //* VOTE
@@ -124,20 +131,12 @@ export class PostResolver {
     const posts = await getConnection().query(
       `
       select p.*,
-      json_build_object(
-        'id', u.id,
-        'username', u.username,
-        'email', u.email,
-        'createdAt', u."createdAt",
-        'updatedAt', u."updatedAt"
-        ) creator,
       ${
         req.session.userId
           ? '(select value from upvote where "userId" = $2 and "postId" = p.id) as "voteStatus"'
           : 'null as "voteStatus"'
       }
       from post p
-      inner join public.user u on u.id = p."creatorId"
       ${cursor ? `where p."createdAt" < $3` : ''}
       order by p."createdAt" DESC
       limit $1
@@ -173,7 +172,8 @@ export class PostResolver {
   // Query decorator is for fetching data
   @Query(() => Post, { nullable: true }) // return the Post
   post(@Arg('id', () => Int) id: number): Promise<Post | undefined> {
-    return Post.findOne(id, { relations: ['creator'] }); //* get post and creator. typeORM automatically writes join for relations option
+    // return Post.findOne(id, { relations: ['creator'] }); //* get post and creator. typeORM automatically writes join for relations option
+    return Post.findOne(id);
   }
 
   //* CREATE A POST
