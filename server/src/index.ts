@@ -17,6 +17,8 @@ import { Post } from './entities/Post';
 import { User } from './entities/User';
 import path from 'path';
 import { Upvote } from './entities/Upvote';
+import { createUserLoader } from './utils/createUserLoader';
+import { createUpvoteLoader } from './utils/createUpvoteLoader';
 
 const main = async () => {
   // console.log("dirname: ", __dirname);
@@ -82,8 +84,14 @@ const main = async () => {
       validate: false,
     }),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
-    // passing express request and response objects to our context
-    context: ({ req, res }) => ({ req, res, redis }),
+    // passing express request and response objects to our context. Context will run for every request
+    context: ({ req, res }) => ({
+      req,
+      res,
+      redis,
+      userLoader: createUserLoader(),
+      upvoteLoader: createUpvoteLoader(),
+    }),
   });
 
   // Create graphQL end point

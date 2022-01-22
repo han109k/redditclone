@@ -22,12 +22,17 @@ const Index = () => {
     cursor: null as null | string,
   });
   // Get posts
-  const [{ data, fetching }] = usePostsQuery({
+  const [{ data, error, fetching }] = usePostsQuery({
     variables,
   });
 
-  if (!fetching && !data) {
-    return <div>You got query failed!!!</div>;
+  if (error) {
+    return (
+      <div>
+        <div>Query failed!</div>
+        <div>{error.message}</div>
+      </div>
+    );
   }
 
   return (

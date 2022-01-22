@@ -44,10 +44,27 @@ export class PostResolver {
     return root.text.slice(0, 50);
   }
 
+  // get creator based on creator id
   @FieldResolver(() => User)
-  creator(@Root() post: Post) {
+  creator(@Root() post: Post, @Ctx() { userLoader }: MyContext) {
     // given creator id on the post find user
-    return User.findOne(post.creatorId);
+    // return User.findOne(post.creatorId);
+    return userLoader.load(post.creatorId);
+  }
+
+  // get vote status
+  @FieldResolver(() => Int, { nullable: true })
+  async voteStatus(
+    @Root() post: Post,
+    @Ctx() { req, upvoteLoader }: MyContext
+  ) {
+    if (!req.session.userId) return null;
+    const upvote = await upvoteLoader.load({
+      postId: post.id,
+      userId: req.session.userId,
+    });
+
+    return upvote ? upvote.value : null;
   }
 
   //* VOTE
@@ -119,10 +136,6 @@ export class PostResolver {
 
     const replacements: any[] = [realLimitPlusOne];
 
-    // console.log('session', req.session);
-
-    if (req.session.userId) replacements.push(req.session.userId);
-
     if (cursor) {
       replacements.push(new Date(parseInt(cursor)));
     }
@@ -130,19 +143,31 @@ export class PostResolver {
 
     const posts = await getConnection().query(
       `
-      select p.*,
-      ${
-        req.session.userId
-          ? '(select value from upvote where "userId" = $2 and "postId" = p.id) as "voteStatus"'
-          : 'null as "voteStatus"'
-      }
+      select p.*
       from post p
-      ${cursor ? `where p."createdAt" < $3` : ''}
+      ${cursor ? `where p."createdAt" < $2` : ''}
       order by p."createdAt" DESC
       limit $1
       `,
       replacements
     );
+
+    // const posts = await getConnection().query(
+    //   `
+    //   select p.*,
+    //* SUBQUERY
+    //   ${
+    //     req.session.userId
+    //       ? '(select value from upvote where "userId" = $2 and "postId" = p.id) as "voteStatus"'
+    //       : 'null as "voteStatus"'
+    //   }
+    //   from post p
+    //   ${cursor ? `where p."createdAt" < $3` : ''}
+    //   order by p."createdAt" DESC
+    //   limit $1
+    //   `,
+    //   replacements
+    // );
 
     // const qb = getConnection()
     //   .getRepository(Post)
