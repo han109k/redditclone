@@ -1,4 +1,4 @@
-import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
+import { cacheExchange, Resolver, Cache } from '@urql/exchange-graphcache';
 import Router from 'next/router';
 import {
   dedupExchange,
@@ -77,6 +77,15 @@ const cursorPagination = (): Resolver => {
   };
 };
 
+function invalidateAllPosts(cache: Cache) {
+  const queryFields = cache.inspectFields('Query'); // Query fields
+  const fieldInfos = queryFields.filter((info) => info.fieldName === 'posts'); // filter
+  fieldInfos.forEach((fi) => {
+    cache.invalidate('Query', 'posts', fi.arguments || {});
+  });
+  console.log('cache inspectFields of Query', cache.inspectFields('Query'));
+}
+
 // urql config.
 export const createUrqlClient = (ssrExchange: any, ctx: any) => {
   // console.log(ctx); // show us req, res, cookie and other important information
@@ -145,17 +154,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
             // createPost(createPost.graphql) send server a request. Saves a new post to our db
             // invalidates cache on client side then index.ts(client-side) re-fetches from graphQL
             createPost: (_result, args, cache, info) => {
-              const queryFields = cache.inspectFields('Query'); // Query fields
-              const fieldInfos = queryFields.filter(
-                (info) => info.fieldName === 'posts'
-              ); // filter
-              fieldInfos.forEach((fi) => {
-                cache.invalidate('Query', 'posts', fi.arguments || {});
-              });
-              console.log(
-                'cache inspectFields of Query',
-                cache.inspectFields('Query')
-              );
+              invalidateAllPosts(cache);
             },
             // delete { me } from cache
             logout: (_result, args, cache, info) => {
@@ -182,6 +181,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               );
+              invalidateAllPosts(cache);
             },
             //
             register: (_result, args, cache, info) => {
