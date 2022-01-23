@@ -7,23 +7,20 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react';
-import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
-import { useState } from 'react';
 import Layout from '../components/Layout';
 // Components
 import VoteSection from '../components/VoteSection';
 import { usePostsQuery } from '../generated/graphql';
-import { createUrqlClient } from '../utils/createUrqlClient';
 
 const Index = () => {
-  const [variables, setVariables] = useState({
-    limit: 10,
-    cursor: null as null | string,
-  });
   // Get posts
-  const [{ data, error, fetching }] = usePostsQuery({
-    variables,
+  const { data, error, loading, fetchMore, variables } = usePostsQuery({
+    variables: {
+      limit: 10,
+      cursor: null,
+    },
+    notifyOnNetworkStatusChange: true,
   });
 
   if (error) {
@@ -40,7 +37,7 @@ const Index = () => {
       <Box textAlign={'center'} mb={6} fontWeight={'bold'}>
         <Heading>Posts</Heading>
       </Box>
-      {!data && fetching ? (
+      {!data && loading ? (
         <div>loading...</div>
       ) : (
         // Posts
@@ -72,15 +69,36 @@ const Index = () => {
       {data && data.posts.hasMore ? (
         <Flex>
           <Button
-            isLoading={fetching}
+            isLoading={loading}
             fontWeight={'light'}
             fontSize={'sm'}
             my={8}
             mx={'auto'}
             onClick={() => {
-              setVariables({
-                limit: variables.limit,
-                cursor: data.posts.posts[data.posts.posts.length - 1].createdAt,
+              fetchMore({
+                variables: {
+                  limit: variables?.limit,
+                  cursor:
+                    data.posts.posts[data.posts.posts.length - 1].createdAt,
+                },
+                // pagination(deprecated)
+                // updateQuery: (
+                //   previousValue,
+                //   { fetchMoreResult }
+                // ): PostsQuery => {
+                //   if (!fetchMoreResult) return previousValue;
+                //   return {
+                //     __typename: 'Query',
+                //     posts: {
+                //       __typename: 'PaginatedPosts',
+                //       hasMore: fetchMoreResult.posts.hasMore,
+                //       posts: [
+                //         ...previousValue.posts.posts,
+                //         ...fetchMoreResult.posts.posts,
+                //       ],
+                //     },
+                //   };
+                // },
               });
             }}
           >
@@ -92,5 +110,4 @@ const Index = () => {
   );
 };
 
-//* ssr enabled + seo improved since changes will effect to the html file
-export default withUrqlClient(createUrqlClient, { ssr: true })(Index);
+export default Index;

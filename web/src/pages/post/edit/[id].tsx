@@ -14,15 +14,15 @@ import { useGetIntId } from '../../../utils/useGetIntId';
 const EditPost = ({}) => {
   const router = useRouter();
   const intId = useGetIntId();
-  const [{ data, error, fetching }] = usePostQuery({
-    pause: intId === -1, // id is clearly wrong so don't even bother sending a request
+  const { data, error, loading } = usePostQuery({
+    skip: intId === -1, // id is clearly wrong so don't even bother sending a request
     variables: {
       id: intId,
     },
   });
-  const [, updatePost] = useUpdatePostMutation();
+  const [updatePost] = useUpdatePostMutation();
 
-  if (fetching) {
+  if (loading) {
     return (
       <Layout>
         <Box>loading...</Box>
@@ -47,7 +47,7 @@ const EditPost = ({}) => {
       <Formik
         initialValues={{ title: data.post.title, text: data.post.text }}
         onSubmit={async (values) => {
-          await updatePost({ id: intId, ...values });
+          await updatePost({ variables: { id: intId, ...values } });
           router.back();
         }}
       >
